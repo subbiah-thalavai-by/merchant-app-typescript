@@ -24,6 +24,7 @@ import {
   Button,
 } from '@material-ui/core';
 import { useHistory } from 'react-router-dom';
+import propertiesfile from '../../resource.json';
 
 interface ICollection {
     id: string;
@@ -163,7 +164,7 @@ const CollectionComp: React.FC = () => {
   };
 
   const redirect = () => {
-    history.push('/collections/create');
+    history.push('/collection/create');
   };
 
   React.useEffect(() => {
@@ -187,7 +188,7 @@ const CollectionComp: React.FC = () => {
     <>
       <Box display="flex" pb={2}>
         <Box flexGrow={1}>
-          <Typography component="div" className={classes.pageTitle}> Collection List</Typography>
+          <Typography component="div" className={classes.pageTitle}>{propertiesfile.title_collection_list}</Typography>
         </Box>
         <Box>
           <Button
@@ -195,8 +196,7 @@ const CollectionComp: React.FC = () => {
             color="primary"
             onClick={redirect}
           >
-            {' '}
-            Add
+            {propertiesfile.button_add}
           </Button>
         </Box>
       </Box>
@@ -204,8 +204,8 @@ const CollectionComp: React.FC = () => {
         <Table aria-label="custom pagination table">
           <TableHead>
             <TableRow>
-              <StyledTableCell>Name</StyledTableCell>
-              <StyledTableCell>Description</StyledTableCell>
+              <StyledTableCell>{propertiesfile.title}</StyledTableCell>
+              <StyledTableCell>{propertiesfile.description}</StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>

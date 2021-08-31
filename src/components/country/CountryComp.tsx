@@ -24,6 +24,7 @@ import {
   Button,
 } from '@material-ui/core';
 import { useHistory } from 'react-router-dom';
+import propertiesfile from '../../resource.json';
 
 interface Icountry {
     id: string;
@@ -166,7 +167,7 @@ const CountryComp: React.FC = () => {
   };
 
   const redirect = () => {
-    history.push('/Countries/create');
+    history.push('/Countrie/create');
   };
 
   React.useEffect(() => {
@@ -190,7 +191,7 @@ const CountryComp: React.FC = () => {
     <>
       <Box display="flex" pb={2}>
         <Box flexGrow={1}>
-          <Typography component="div" className={classes.pageTitle}> Countries List</Typography>
+          <Typography component="div" className={classes.pageTitle}>{propertiesfile.title_country_list}</Typography>
         </Box>
         <Box>
           <Button
@@ -198,8 +199,8 @@ const CountryComp: React.FC = () => {
             color="primary"
             onClick={redirect}
           >
-            {' '}
-            Add
+            {propertiesfile.button_add}
+
           </Button>
         </Box>
       </Box>
@@ -207,11 +208,11 @@ const CountryComp: React.FC = () => {
         <Table aria-label="custom pagination table">
           <TableHead>
             <TableRow>
-              <StyledTableCell>Name</StyledTableCell>
-              <StyledTableCell>Code</StyledTableCell>
-              <StyledTableCell>ISD Code</StyledTableCell>
-              <StyledTableCell>Currency</StyledTableCell>
-              <StyledTableCell>Currency Symbol</StyledTableCell>
+              <StyledTableCell>{propertiesfile.name}</StyledTableCell>
+              <StyledTableCell>{propertiesfile.code}</StyledTableCell>
+              <StyledTableCell>{propertiesfile.isd_code}</StyledTableCell>
+              <StyledTableCell>{propertiesfile.currency}</StyledTableCell>
+              <StyledTableCell>{propertiesfile.currency_symbol}</StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -221,7 +222,11 @@ const CountryComp: React.FC = () => {
             ).map((row) => (
               <StyledTableRow key={row.id}>
                 <TableCell>
-                  {row.name}
+                  <a href={`/#/countries/${row.id}`}>
+                    {' '}
+                    {row.name}
+                    {' '}
+                  </a>
                 </TableCell>
                 <TableCell>
                   {row.code}

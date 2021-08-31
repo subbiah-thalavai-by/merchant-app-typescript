@@ -1,3 +1,9 @@
+/* eslint-disable consistent-return */
+/* eslint-disable no-alert */
+/* eslint-disable import/extensions */
+/* eslint-disable no-shadow */
+/* eslint-disable eqeqeq */
+/* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-console */
 import React, { useState, ChangeEvent, useEffect } from 'react';
@@ -15,11 +21,11 @@ import {
   Link,
   Grid,
   Button,
-  CssBaseline,
-  RadioGroup,
-  FormLabel,
-  MenuItem,
-  FormGroup,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   FormControl,
   FormControlLabel,
   Box,
@@ -32,6 +38,10 @@ import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import clsx from 'clsx';
 import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
 import { DropzoneArea, DropzoneAreaProps } from 'material-ui-dropzone';
+import { FormattedMessage } from 'react-intl';
+import { firebaseConfig, db, storageRef } from '../../firebaseSetup';
+import BootstrapTooltip from '../../common-components/BootstrapTooltip';
+import propertiesfile from '../../resource.json';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -155,6 +165,7 @@ interface IBrandData {
 // }
 
 const CreateBrandComp: React.FC = () => {
+  console.log(propertiesfile.RequiredErrorMessage);
   const history = useHistory();
   const classes = useStyles();
   const initialBrandState = {
@@ -165,103 +176,245 @@ const CreateBrandComp: React.FC = () => {
 
   const [brand, setBrand] = useState<IBrandData>(initialBrandState);
   const [brandImage, setBrandImage] = useState([] as any);
+  const [isFormInvalid, setIsFormInvalid] = useState([{}] as any);
+  const [progress, setProgress] = useState(100);
+  const [errorOpen, setErrorOpen] = React.useState(false);
+  const [apiError, setApiError] = React.useState('');
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setBrand({ ...brand, [name]: value });
   };
 
-  const saveBrand = () => {
-    console.log(brand);
-    axios.post(`${process.env.REACT_APP_BASE_URL}brands`, brand)
-      .then((res) => history.push('/brands'));
+  const saveBrand = async () => {
+    const errorObj = {} as any;
+    let error = false;
+    if (brand.title !== '') {
+      errorObj.title = false;
+    } else {
+      errorObj.title = true;
+      error = true;
+    }
+
+    setIsFormInvalid(errorObj);
+
+    if (!error) {
+      setProgress(0);
+      // try {
+      const brandData = await AddBrandData();
+      if (brandImage.length > 0) {
+        await AddBrandImage(brandData);
+        history.push('/brands');
+      }
+      console.log(brand);
+      setProgress(100);
+      // } catch (e: any) {
+      //   alert(e.error.message);
+      //   console.log(e.error.message);
+      // }
+    }
   };
+
+  const AddBrandData = async () => {
+    try {
+      const response = await axios.post(`${process.env.REACT_APP_BASE_URL}brands`, brand);
+      return response.data.id;
+    } catch (e: any) {
+      setErrorOpen(true);
+      setApiError(e.response.data.message);
+    }
+  };
+
+  const AddBrandImage = async (id: any) => new Promise<void>((resolve, reject) => {
+    if (brandImage.length > 0) {
+      const fileStoreRef = storageRef.child(`brand_images/${id}`).put(brandImage[0]);
+      fileStoreRef.on('state_changed',
+        (snapshot) => {
+        // Observe state change events such as progress, pause, and resume
+        // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+        // const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        },
+        (error: any) => {
+        // Handle unsuccessful uploads
+          console.log(error);
+          reject(error);
+          setErrorOpen(true);
+          setApiError('Could not access bucket');
+          setProgress(100);
+        },
+        () => {
+        // setProgress(progress);
+        // Handle successful uploads on complete
+        // For instance, get the download URL: https://firebasestorage.googleapis.com/...
+          fileStoreRef.snapshot.ref.getDownloadURL().then(async (downloadURL: any) => {
+            console.log('File available at', downloadURL);
+            const brandImgObj = {
+              imageURL: downloadURL,
+            };
+            try {
+              const updateImageUrl = await axios.patch(`${process.env.REACT_APP_BASE_URL}brandss/${id}`, brandImgObj);
+            } catch (e: any) {
+              setErrorOpen(true);
+              setApiError(e.response.data.message);
+            }
+            resolve();
+          });
+        });
+    }
+  });
 
   const handlefileupload = (e: any) => {
     console.log(e);
-    setBrandImage(e);
+    if (e[0] && e[0].name != '') {
+      setBrandImage(e);
+    }
   };
 
   const cancelClick = () => {
     history.push('/brands');
   };
 
+  const handleErrorDialogClose = () => {
+    setErrorOpen(false);
+  };
+
   return (
     <>
-      <Grid
-        container
-        spacing={2}
-        className={clsx(classes.gridClass, classes.root)}
-      >
-        <Grid item xs={12} spacing={1}>
-          <Typography component="div" className={classes.pageTitle}>
-            Create Brand
-          </Typography>
-        </Grid>
+      { progress < 100
+        ? (
+          <div>
+            <LinearProgress />
+          </div>
+        )
+        : (
+          <Grid
+            container
+            spacing={2}
+            className={clsx(classes.gridClass, classes.root)}
+          >
+            <Grid item xs={12} spacing={1}>
+              <Typography component="div" className={classes.pageTitle}>
+                {propertiesfile.title_brand_create}
 
-        <Grid item xs={9}>
-          <Grid item xs={12} justify="flex-start">
-            <Box component="div" className={classes.boxDiv} style={{ width: '100%', display: 'inline-block' }}>
-              <Paper elevation={3} className={classes.boxDivPaper} style={{ width: '100%', display: 'inline-block' }}>
-                <div className={classes.boxDropZoneDiv}>
-                  <DropzoneArea
-                    acceptedFiles={['image/*']}
-                    onChange={(e) => handlefileupload(e)}
-                    showPreviewsInDropzone={false}
-                    dropzoneClass={`${classes.dropzonediv} ${brandImage.length && classes.dropZoneNoneClass}`}
-                    previewGridClasses={{
-                      container: classes.previewContainer,
-                      item: classes.previewItem,
-                    }}
-                    previewText=""
-                    showPreviews
-                    filesLimit={1}
-                  />
-                </div>
-              </Paper>
-            </Box>
-          </Grid>
+              </Typography>
+            </Grid>
 
-          <Grid item xs={12} justify="flex-start">
-            <Box component="div" className={classes.boxDiv} style={{ width: '100%', display: 'inline-block' }}>
-              <Paper elevation={3} className={classes.boxDivPaper} style={{ width: '100%', display: 'inline-block' }}>
-                <div className={classes.boxInnerDiv}>
-                  <TextField size="small" type="text" name="title" label="brand Name" variant="outlined" value={brand.title} onChange={handleInputChange} />
-                </div>
-                <div className={classes.boxInnerDiv}>
-                  <TextField size="small" type="text" name="description" label="description" variant="outlined" value={brand.description} onChange={handleInputChange} />
-                </div>
-
-                <Box className={classes.buttonmargin}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    type="button"
-                    onClick={saveBrand}
-                  >
-                    {' '}
-                    Create
-                  </Button>
-
-                  <Button
-                    className={classes.cancelmargin}
-                    variant="outlined"
-                    type="button"
-                    onClick={cancelClick}
-                  >
-                    {' '}
-                    Cancel
-                  </Button>
+            <Grid item xs={9}>
+              <Grid item xs={12} justify="flex-start">
+                <Box component="div" className={classes.boxDiv} style={{ width: '100%', display: 'inline-block' }}>
+                  <Paper elevation={3} className={classes.boxDivPaper} style={{ width: '100%', display: 'inline-block' }}>
+                    <div className={classes.boxDropZoneDiv}>
+                      <DropzoneArea
+                        acceptedFiles={['image/*']}
+                        onChange={(e) => handlefileupload(e)}
+                        showPreviewsInDropzone={false}
+                        dropzoneClass={`${classes.dropzonediv} ${brandImage.length && classes.dropZoneNoneClass}`}
+                        previewGridClasses={{
+                          container: classes.previewContainer,
+                          item: classes.previewItem,
+                        }}
+                        previewText=""
+                        showPreviews
+                        filesLimit={1}
+                      />
+                    </div>
+                  </Paper>
                 </Box>
+              </Grid>
 
-              </Paper>
-            </Box>
+              <Grid item xs={12} justify="flex-start">
+                <Box component="div" className={classes.boxDiv} style={{ width: '100%', display: 'inline-block' }}>
+                  <Paper elevation={3} className={classes.boxDivPaper} style={{ width: '100%', display: 'inline-block' }}>
+                    <div className={classes.boxInnerDiv}>
+                      <TextField
+                        error={isFormInvalid.title}
+                        helperText={isFormInvalid.title && (
+                        <FormattedMessage
+                          id={propertiesfile.RequiredErrorMessage}
+                          defaultMessage={propertiesfile.RequiredErrorMessage}
+                          values={{ e: `${'brand Title'}` }}
+                        />
+                        )}
+                        size="small"
+                        type="text"
+                        name="title"
+                        label="brand Title"
+                        variant="outlined"
+                        value={brand.title}
+                        onChange={handleInputChange}
+                      />
+                      <div className={classes.boxInnerDivToolTip}>
+                        <BootstrapTooltip title="Brand Title">
+                          {/* <span> ? </span> */}
+                          <HelpOutlineIcon />
+                        </BootstrapTooltip>
+                      </div>
+                    </div>
+                    <div className={classes.boxInnerDiv}>
+                      <TextField
+                        size="small"
+                        type="text"
+                        name="description"
+                        label="description"
+                        variant="outlined"
+                        value={brand.description}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+
+                    <Box className={classes.buttonmargin}>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        type="button"
+                        onClick={saveBrand}
+                      >
+                        {propertiesfile.button_create}
+
+                      </Button>
+
+                      <Button
+                        className={classes.cancelmargin}
+                        variant="outlined"
+                        type="button"
+                        onClick={cancelClick}
+                      >
+                        {propertiesfile.button_cancel}
+                      </Button>
+                    </Box>
+
+                  </Paper>
+                </Box>
+              </Grid>
+            </Grid>
+
           </Grid>
-        </Grid>
+        )}
 
-      </Grid>
-
+      {/* error dialog code */}
+      <div>
+        <Dialog
+          open={errorOpen}
+          onClose={handleErrorDialogClose}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title">API Error</DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              {apiError}
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleErrorDialogClose} color="primary">
+              OK
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </div>
+      {/* error dialog code end */}
     </>
+
   );
 };
 

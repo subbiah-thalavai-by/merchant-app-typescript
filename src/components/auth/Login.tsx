@@ -11,7 +11,8 @@ import { makeStyles } from '@material-ui/core/styles';
 import SvgIcon, { SvgIconTypeMap } from '@material-ui/core/SvgIcon';
 import { CommonProps } from '@material-ui/core/OverridableComponent';
 import { firebaseConfig, auth } from '../../firebaseSetup';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../../context/AuthContext';
+import propertiesfile from '../../resource.json';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -93,6 +94,7 @@ const LogIn = () => {
         userData.password,
       );
       console.log(res);
+      // <Redirect to="/brands" />;
     } catch (error) {
       console.error(error);
     }
@@ -128,7 +130,7 @@ const LogIn = () => {
                 color="primary"
                 startIcon={<FIcon />}
               >
-                Login with facebook
+                {propertiesfile.button_login_with_facebook}
 
               </Button>
             </Grid>
@@ -141,7 +143,7 @@ const LogIn = () => {
                 color="primary"
                 startIcon={<GIcon />}
               >
-                Login with Google
+                {propertiesfile.button_login_with_google}
 
               </Button>
             </Grid>
@@ -167,17 +169,16 @@ const LogIn = () => {
                 color="primary"
                 onClick={signIn}
               >
-                Login
+                {propertiesfile.button_login}
 
               </Button>
             </Grid>
             <Grid item xs={12} style={{ fontSize: '16px', paddingTop: '16px' }}>
               <span>
-                {' '}
-                Dont have an account?
-                {' '}
-                <Link to="/signup">Sign Up </Link>
-                {' '}
+                {propertiesfile.dont_have_an_account}
+                <Link to="/signup">
+                  {propertiesfile.sign_up}
+                </Link>
               </span>
             </Grid>
           </div>

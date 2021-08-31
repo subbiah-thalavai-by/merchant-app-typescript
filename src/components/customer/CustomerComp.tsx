@@ -24,6 +24,7 @@ import FirstPageIcon from '@material-ui/icons/FirstPage';
 import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import TableFooter from '@material-ui/core/TableFooter';
+import propertiesfile from '../../resource.json';
 
 const useStyles = makeStyles((theme) => ({
   table: {
@@ -169,7 +170,7 @@ const CustomerComp: React.FC = () => {
   };
 
   const redirect = () => {
-    // history.push('/customers/create');
+    history.push('/customer/create');
   };
 
   React.useEffect(() => {
@@ -208,7 +209,11 @@ const CustomerComp: React.FC = () => {
     <>
       <Box display="flex" pb={2}>
         <Box flexGrow={1}>
-          <Typography component="div" className={classes.pageTitle}> Customer List</Typography>
+          <Typography component="div" className={classes.pageTitle}>
+            {' '}
+            {propertiesfile.title_customer_list}
+            {' '}
+          </Typography>
         </Box>
         <Box>
           <Button
@@ -216,8 +221,7 @@ const CustomerComp: React.FC = () => {
             color="primary"
             onClick={redirect}
           >
-            {' '}
-            Add
+            {propertiesfile.button_add}
           </Button>
         </Box>
       </Box>
@@ -226,11 +230,11 @@ const CustomerComp: React.FC = () => {
         <Table className={classes.table} aria-label="simple table">
           <TableHead>
             <TableRow>
-              <StyledTableCell>First Name</StyledTableCell>
-              <StyledTableCell>Last Name</StyledTableCell>
-              <StyledTableCell>ISD Code</StyledTableCell>
-              <StyledTableCell>Phone Number</StyledTableCell>
-              <StyledTableCell>Email</StyledTableCell>
+              <StyledTableCell>{propertiesfile.first_name}</StyledTableCell>
+              <StyledTableCell>{propertiesfile.last_name}</StyledTableCell>
+              <StyledTableCell>{propertiesfile.isd_code}</StyledTableCell>
+              <StyledTableCell>{propertiesfile.phone_number}</StyledTableCell>
+              <StyledTableCell>{propertiesfile.email}</StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>

@@ -38,7 +38,8 @@ import MenuBookOutlinedIcon from '@material-ui/icons/MenuBookOutlined';
 import AccountCircleOutlinedIcon from '@material-ui/icons/AccountCircleOutlined';
 import GroupAddIcon from '@material-ui/icons/GroupAdd';
 import { auth } from '../../firebaseSetup';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../../context/AuthContext';
+import propertiesfile from '../../resource.json';
 
 const drawerWidth = 240;
 
@@ -197,6 +198,7 @@ const Layout: FC<LayoutProps> = ({ children }: LayoutProps) => {
   const [open, setOpen] = useState(false);
   const [catalogSubMenuOpen, setCatalogSubMenuOpen] = useState(false);
   const [subMenuOpen, setSubMenuOpen] = useState(false);
+  const user = useContext(AuthContext);
 
   const [path, setPath] = useState('');
 
@@ -204,7 +206,7 @@ const Layout: FC<LayoutProps> = ({ children }: LayoutProps) => {
 
   useEffect(() => {
     setPath(location.pathname);
-    console.log(location.pathname);
+    // console.log(location.pathname);
   }, [location, setPath]);
 
   const activetRoute = (route: string) =>
@@ -264,21 +266,20 @@ const Layout: FC<LayoutProps> = ({ children }: LayoutProps) => {
           <PersonOutlineIcon fontSize="large" />
         </ListItemIcon>
         <Typography className={classes.pfmenu} variant="inherit">
-          user
+          {user?.email}
         </Typography>
       </MenuItem>
       <Divider />
-      <MenuItem className={classes.pfmenu} onClick={() => signOut()}>Log Out</MenuItem>
+      <MenuItem className={classes.pfmenu} onClick={() => signOut()}>{propertiesfile.menu_log_out}</MenuItem>
     </Menu>
   );
     // code for profile icon end
 
-  const user = useContext(AuthContext);
-  console.log(user);
+  // console.log(user);
   if (!user) {
     return <Redirect to="/" />;
   }
-  console.log(user);
+  // console.log(user);
 
   return (
     // eslint-disable-next-line react/react-in-jsx-scope
@@ -303,7 +304,7 @@ const Layout: FC<LayoutProps> = ({ children }: LayoutProps) => {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap>
-            BlueYonder
+            {propertiesfile.blueyonder}
           </Typography>
 
           <div className={classes.grow} />
@@ -360,7 +361,7 @@ const Layout: FC<LayoutProps> = ({ children }: LayoutProps) => {
             </ListItemIcon>
             <ListItemText primary={(
               <Typography>
-                Catalog
+                {propertiesfile.menu_catalog}
               </Typography>
           )}
             />
@@ -373,7 +374,7 @@ const Layout: FC<LayoutProps> = ({ children }: LayoutProps) => {
 
                 <ListItemText primary={(
                   <Typography className={classes.subMenu}>
-                    Brand
+                    {propertiesfile.menu_Brand}
                   </Typography>
               )}
                 />
@@ -384,7 +385,7 @@ const Layout: FC<LayoutProps> = ({ children }: LayoutProps) => {
               </ListItemIcon> */}
                 <ListItemText primary={(
                   <Typography className={classes.subMenu}>
-                    Category
+                    {propertiesfile.menu_catalog}
                   </Typography>
               )}
                 />
@@ -393,7 +394,7 @@ const Layout: FC<LayoutProps> = ({ children }: LayoutProps) => {
               <ListItem button key="Products" component="a" href="/#/products" className={clsx({ selected: classes.listActive })}>
                 <ListItemText primary={(
                   <Typography className={classes.subMenu}>
-                    Products
+                    {propertiesfile.menu_Products}
                   </Typography>
               )}
                 />
@@ -404,7 +405,7 @@ const Layout: FC<LayoutProps> = ({ children }: LayoutProps) => {
                 </ListItemIcon> */}
                 <ListItemText primary={(
                   <Typography className={classes.subMenu}>
-                    Orders
+                    {propertiesfile.menu_orders}
                   </Typography>
               )}
                 />
@@ -422,7 +423,7 @@ const Layout: FC<LayoutProps> = ({ children }: LayoutProps) => {
             </ListItemIcon>
             <ListItemText primary={(
               <Typography>
-                Settings
+                {propertiesfile.menu_settings}
               </Typography>
           )}
             />
@@ -433,7 +434,7 @@ const Layout: FC<LayoutProps> = ({ children }: LayoutProps) => {
               <ListItem button key="general" component="a" className={clsx({ selected: classes.listActive })} href="/setting/general" selected={activetRoute('/setting/general')}>
                 <ListItemText primary={(
                   <Typography className={classes.subMenu}>
-                    General
+                    {propertiesfile.menu_General}
                   </Typography>
               )}
                 />
@@ -441,7 +442,7 @@ const Layout: FC<LayoutProps> = ({ children }: LayoutProps) => {
               <ListItem button key="countries" component="a" className={clsx({ selected: classes.listActive })} href="/#/countries" selected={activetRoute('/countries')}>
                 <ListItemText primary={(
                   <Typography className={classes.subMenu}>
-                    Countries
+                    {propertiesfile.menu_countries}
                   </Typography>
               )}
                 />
@@ -449,7 +450,7 @@ const Layout: FC<LayoutProps> = ({ children }: LayoutProps) => {
               <ListItem button key="taxes" component="a" className={clsx({ selected: classes.listActive })} href="/#/taxes" selected={activetRoute('/taxes')}>
                 <ListItemText primary={(
                   <Typography className={classes.subMenu}>
-                    Taxes
+                    {propertiesfile.menu_taxes}
                   </Typography>
               )}
                 />
@@ -458,7 +459,7 @@ const Layout: FC<LayoutProps> = ({ children }: LayoutProps) => {
               <ListItem button key="productType" component="a" className={clsx({ selected: classes.listActive })} href="/#/product-types" selected={activetRoute('/product-types')}>
                 <ListItemText primary={(
                   <Typography className={classes.subMenu}>
-                    Product Type
+                    {propertiesfile.menu_product_type}
                   </Typography>
               )}
                 />
@@ -472,7 +473,7 @@ const Layout: FC<LayoutProps> = ({ children }: LayoutProps) => {
             </ListItemIcon>
             <ListItemText primary={(
               <Typography>
-                Profile
+                {propertiesfile.menu_profile}
               </Typography>
           )}
             />

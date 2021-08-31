@@ -1,3 +1,5 @@
+/* eslint-disable import/extensions */
+/* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-console */
 import axios from 'axios';
@@ -29,6 +31,9 @@ import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import clsx from 'clsx';
 import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
 import { DropzoneArea, DropzoneAreaProps } from 'material-ui-dropzone';
+import { FormattedMessage } from 'react-intl';
+import { storageRef } from '../../firebaseSetup';
+import propertiesfile from '../../resource.json';
 
 interface ICollectionData {
     title: string,
@@ -154,100 +159,174 @@ const CreateCollectionComp: React.FC = () => {
   };
   const [collection, setCollection] = useState<ICollectionData>(initialCollectionState);
   const [collectionImage, setCollectionImage] = useState([]);
+  const [isFormInvalid, setIsFormInvalid] = useState([{ title: '', description: '' }] as any);
+  const [progress, setProgress] = useState(100);
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setCollection({ ...collection, [name]: value });
   };
 
-  const saveCollection = () => {
-    console.log(collection);
-    axios.post(`${process.env.REACT_APP_BASE_URL}collections`, collection)
-      .then((res) => history.push('/collections'));
+  const saveCollection = async () => {
+    const errorObj = {} as any;
+    let error = false;
+    if (collection.title !== '') {
+      errorObj.title = false;
+    } else {
+      errorObj.title = true;
+      error = true;
+    }
+
+    setIsFormInvalid(errorObj);
+
+    if (!error) {
+      setProgress(0);
+      const collectionData = await AddCollectionData();
+      await AddcollectionImage(collectionData);
+      setProgress(100);
+      console.log(collectionData);
+      history.push('/collections');
+      console.log(collection);
+    }
   };
+
+  const AddCollectionData = async () => {
+    const response = await axios.post(`${process.env.REACT_APP_BASE_URL}collections`, collection);
+    return response.data.id;
+  };
+
+  const AddcollectionImage = async (id: any) => new Promise<void>((resolve, reject) => {
+    const fileStoreRef = storageRef.child(`collections_images/${id}`).put(collectionImage[0]);
+    fileStoreRef.on('state_changed',
+      (snapshot) => {
+        // Observe state change events such as progress, pause, and resume
+        // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+        // const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      },
+      (error: any) => {
+        // Handle unsuccessful uploads
+        console.log(error);
+        reject(error);
+      },
+      () => {
+        // setProgress(progress);
+        // Handle successful uploads on complete
+        // For instance, get the download URL: https://firebasestorage.googleapis.com/...
+        fileStoreRef.snapshot.ref.getDownloadURL().then((downloadURL: any) => {
+          console.log('File available at', downloadURL);
+          const brandImgObj = {
+            imageURL: downloadURL,
+          };
+          axios.patch(`${process.env.REACT_APP_BASE_URL}collections/${id}`, brandImgObj);
+          resolve();
+        });
+      });
+  });
 
   const handlefileupload = (e: any) => {
     console.log(e);
+    setCollectionImage(e);
   };
 
   const cancelClick = () => {
-    history.push('/brands');
+    history.push('/collections');
   };
 
   return (
     <>
-      <Grid
-        container
-        spacing={2}
-        className={clsx(classes.gridClass, classes.root)}
-      >
-        <Grid item xs={12} spacing={1}>
-          <Typography component="div" className={classes.pageTitle}>
-            Create Collection
-          </Typography>
-        </Grid>
+      { progress < 100
+        ? (
+          <div>
+            <LinearProgress />
+          </div>
+        )
+        : (
+          <Grid
+            container
+            spacing={2}
+            className={clsx(classes.gridClass, classes.root)}
+          >
+            <Grid item xs={12} spacing={1}>
+              <Typography component="div" className={classes.pageTitle}>
+                {propertiesfile.title_collection_create}
+              </Typography>
+            </Grid>
 
-        <Grid item xs={9}>
-          <Grid item xs={12} justify="flex-start">
-            <Box component="div" className={classes.boxDiv} style={{ width: '100%', display: 'inline-block' }}>
-              <Paper elevation={3} className={classes.boxDivPaper} style={{ width: '100%', display: 'inline-block' }}>
-                <div className={classes.boxDropZoneDiv}>
-                  <DropzoneArea
-                    acceptedFiles={['image/*']}
-                    onChange={(e) => handlefileupload(e)}
-                    showPreviewsInDropzone={false}
-                    dropzoneClass={`${classes.dropzonediv}`}
-                    previewGridClasses={{
-                      container: classes.previewContainer,
-                      item: classes.previewItem,
-                    }}
-                    previewText=""
-                    showPreviews
-                    filesLimit={1}
-                  />
-                </div>
-              </Paper>
-            </Box>
-          </Grid>
-
-          <Grid item xs={12} justify="flex-start">
-            <Box component="div" className={classes.boxDiv} style={{ width: '100%', display: 'inline-block' }}>
-              <Paper elevation={3} className={classes.boxDivPaper} style={{ width: '100%', display: 'inline-block' }}>
-                <div className={classes.boxInnerDiv}>
-                  <TextField size="small" type="text" name="title" label="Collection Name" variant="outlined" value={collection.title} onChange={handleInputChange} />
-                </div>
-                <div className={classes.boxInnerDiv}>
-                  <TextField size="small" type="text" name="description" label="description" variant="outlined" value={collection.description} onChange={handleInputChange} />
-                </div>
-
-                <Box className={classes.buttonmargin}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    type="button"
-                    onClick={saveCollection}
-                  >
-                    {' '}
-                    Create
-                  </Button>
-
-                  <Button
-                    className={classes.cancelmargin}
-                    variant="outlined"
-                    type="button"
-                    onClick={cancelClick}
-                  >
-                    {' '}
-                    Cancel
-                  </Button>
+            <Grid item xs={9}>
+              <Grid item xs={12} justify="flex-start">
+                <Box component="div" className={classes.boxDiv} style={{ width: '100%', display: 'inline-block' }}>
+                  <Paper elevation={3} className={classes.boxDivPaper} style={{ width: '100%', display: 'inline-block' }}>
+                    <div className={classes.boxDropZoneDiv}>
+                      <DropzoneArea
+                        acceptedFiles={['image/*']}
+                        onChange={(e) => handlefileupload(e)}
+                        showPreviewsInDropzone={false}
+                        dropzoneClass={`${classes.dropzonediv}`}
+                        previewGridClasses={{
+                          container: classes.previewContainer,
+                          item: classes.previewItem,
+                        }}
+                        previewText=""
+                        showPreviews
+                        filesLimit={1}
+                      />
+                    </div>
+                  </Paper>
                 </Box>
+              </Grid>
 
-              </Paper>
-            </Box>
+              <Grid item xs={12} justify="flex-start">
+                <Box component="div" className={classes.boxDiv} style={{ width: '100%', display: 'inline-block' }}>
+                  <Paper elevation={3} className={classes.boxDivPaper} style={{ width: '100%', display: 'inline-block' }}>
+                    <div className={classes.boxInnerDiv}>
+                      <TextField
+                        error={isFormInvalid.title}
+                        helperText={isFormInvalid.title && (
+                        <FormattedMessage
+                          id={propertiesfile.RequiredErrorMessage}
+                          defaultMessage={propertiesfile.RequiredErrorMessage}
+                          values={{ e: `${'collection Title'}` }}
+                        />
+                        )}
+                        size="small"
+                        type="text"
+                        name="title"
+                        label="Collection Title"
+                        variant="outlined"
+                        value={collection.title}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div className={classes.boxInnerDiv}>
+                      <TextField size="small" type="text" name="description" label="description" variant="outlined" value={collection.description} onChange={handleInputChange} />
+                    </div>
+
+                    <Box className={classes.buttonmargin}>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        type="button"
+                        onClick={saveCollection}
+                      >
+                        {propertiesfile.button_create}
+                      </Button>
+
+                      <Button
+                        className={classes.cancelmargin}
+                        variant="outlined"
+                        type="button"
+                        onClick={cancelClick}
+                      >
+                        {propertiesfile.button_cancel}
+                      </Button>
+                    </Box>
+
+                  </Paper>
+                </Box>
+              </Grid>
+            </Grid>
           </Grid>
-        </Grid>
-      </Grid>
-
+        )}
     </>
   );
 };

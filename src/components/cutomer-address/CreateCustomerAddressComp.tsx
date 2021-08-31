@@ -1,6 +1,96 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, ChangeEvent } from 'react';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
+import {
+  useHistory, Redirect, useParams,
+} from 'react-router-dom';
+import { makeStyles } from '@material-ui/core/styles';
+import TextField from '@material-ui/core/TextField';
+import LinearProgress from '@material-ui/core/LinearProgress';
+import {
+  Typography,
+  Paper,
+  Grid,
+  Button,
+  Box,
+} from '@material-ui/core';
+import clsx from 'clsx';
+import propertiesfile from '../../resource.json';
+
+const useStyles = makeStyles((theme) => ({
+  root: {
+    '& .MuiFormControl-root': {
+      width: '95%',
+      margin: theme.spacing(1),
+    },
+    '& .MuiDropzonePreviewList-image': {
+      // width: '100%',
+      maxHeight: '120px',
+      height: 'auto',
+      borderRadius: ['0px', '!important'],
+    },
+    '& .MuiDropzonePreviewList-removeButton': {
+      top: '0px',
+      right: '0px',
+      color: 'red',
+      zIndex: '1000',
+    },
+    '& .MuiDropzoneArea-text': {
+      fontSize: ['12px', '!important'],
+    },
+    '& .MuiDropzoneArea-icon': {
+      width: '20px',
+      height: '20px',
+    },
+    '& .MuiDropzonePreviewList-imageContainer': {
+      padding: ['0px', '!important'],
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '120px',
+      width: '120px',
+    },
+  },
+  pageTitle: {
+    fontWeight: 'bold',
+    color: theme.palette.text.primary,
+    fontSize: '24px',
+    // marginTop:'15px',
+    // paddingBottom:'15px'
+  },
+  gridClass: {
+    flexGrow: 1,
+  },
+  boxDiv: {
+    background: '#ffffff',
+    marginBottom: '15px',
+  },
+  boxDivPaper: {
+    padding: '8px',
+  },
+  boxInnerDiv: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    paddingRight: '8px',
+  },
+  boxInnerDivToolTip: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    cursor: 'default',
+  },
+  formMargin: {
+    marginTop: '8px',
+    marginLeft: '8px',
+  },
+  buttonmargin: {
+    margin: '8px',
+  },
+  cancelmargin: {
+    marginLeft: '16px',
+  },
+
+}));
 
 interface ICustomerAddress {
     firstName: string;
@@ -16,6 +106,8 @@ interface ICustomerAddress {
 }
 
 const CreateCustomerAddress: React.FC = () => {
+  const history = useHistory();
+  const classes = useStyles();
   const intialCustomerAddressState = {
     firstName: '',
     lastName: '',
@@ -30,6 +122,8 @@ const CreateCustomerAddress: React.FC = () => {
   };
 
   const [customersAdress, setCustomersAdress] = React.useState<ICustomerAddress>(intialCustomerAddressState);
+  const [isFormInvalid, setIsFormInvalid] = useState([{ }] as any);
+  const [progress, setProgress] = useState(100);
 
   const { id } = useParams<{ id: string }>();
   console.log(id);
@@ -42,146 +136,155 @@ const CreateCustomerAddress: React.FC = () => {
   };
 
   const saveCustomerAddress = () => {
-    axios.post(`${process.env.REACT_APP_BASE_URL}/customers/${id}/addresses`, customersAdress)
-      .then((res) => alert('customer address save sucessfully'));
-    console.log(customersAdress);
+    const errorObj = {} as any;
+    let error = false;
+    if (customersAdress.firstName !== '') {
+      errorObj.firstName = false;
+    } else {
+      errorObj.firstName = true;
+      error = true;
+    }
+    if (customersAdress.lastName !== '') {
+      errorObj.lastName = false;
+    } else {
+      errorObj.lastName = true;
+      error = true;
+    }
+    if (customersAdress.isdCode !== '') {
+      errorObj.isdCode = false;
+    } else {
+      errorObj.isdCode = true;
+      error = true;
+    }
+    if (customersAdress.phoneNumber !== '') {
+      errorObj.phoneNumber = false;
+    } else {
+      errorObj.phoneNumber = true;
+      error = true;
+    }
+    if (customersAdress.address1 !== '') {
+      errorObj.address1 = false;
+    } else {
+      errorObj.address1 = true;
+      error = true;
+    }
+    if (customersAdress.address2 !== '') {
+      errorObj.address2 = false;
+    } else {
+      errorObj.address2 = true;
+      error = true;
+    }
+    if (customersAdress.city !== '') {
+      errorObj.city = false;
+    } else {
+      errorObj.city = true;
+      error = true;
+    }
+    if (customersAdress.country !== '') {
+      errorObj.country = false;
+    } else {
+      errorObj.country = true;
+      error = true;
+    }
+    if (customersAdress.zip !== '') {
+      errorObj.zip = false;
+    } else {
+      errorObj.zip = true;
+      error = true;
+    }
+    setIsFormInvalid(errorObj);
+    if (!error) {
+      axios.post(`${process.env.REACT_APP_BASE_URL}/customers/${id}/addresses`, customersAdress)
+        .then((res) => history.push('/customers'));
+      console.log(customersAdress);
+    }
+  };
+
+  const cancelClick = () => {
+    history.push('/customers');
   };
 
   return (
-    <div>
+    <>
+      <Grid
+        container
+        spacing={2}
+        className={clsx(classes.gridClass, classes.root)}
+      >
+        <Grid item xs={12} spacing={1}>
+          <Typography component="div" className={classes.pageTitle}>
+            {propertiesfile.title_customer_address_create}
+          </Typography>
+        </Grid>
 
-      <div>
-        <div className="form-group">
-          <input
-            placeholder="fisrt name"
-            type="text"
-            className="form-control"
-            id="code"
-            required
-            value={customersAdress.firstName}
-            onChange={handleInputChange}
-            name="firstName"
-          />
-        </div>
+        <Grid item xs={9}>
 
-        <div className="form-group">
-          <input
-            placeholder="last name"
-            type="text"
-            className="form-control"
-            id="rate"
-            required
-            value={customersAdress.lastName}
-            onChange={handleInputChange}
-            name="lastName"
-          />
-        </div>
+          <Grid item xs={12} justify="flex-start">
+            <Box component="div" className={classes.boxDiv} style={{ width: '100%', display: 'inline-block' }}>
+              <Paper elevation={3} className={classes.boxDivPaper} style={{ width: '100%', display: 'inline-block' }}>
+                <div className={classes.boxInnerDiv}>
+                  <TextField size="small" type="text" name="firstName" label="firstName" variant="outlined" value={customersAdress.firstName} onChange={handleInputChange} />
+                </div>
+                <div className={classes.boxInnerDiv}>
+                  <TextField size="small" type="text" name="lastName" label="lastName" variant="outlined" value={customersAdress.lastName} onChange={handleInputChange} />
+                </div>
 
-        <div className="form-group">
-          <input
-            placeholder="address1"
-            type="text"
-            className="form-control"
-            id="rate"
-            required
-            value={customersAdress.address1}
-            onChange={handleInputChange}
-            name="address1"
-          />
-        </div>
+                <div className={classes.boxInnerDiv}>
+                  <TextField size="small" type="text" name="isdCode" label="isdCode" variant="outlined" value={customersAdress.isdCode} onChange={handleInputChange} />
+                </div>
 
-        <div className="form-group">
-          <input
-            placeholder="address2"
-            type="text"
-            className="form-control"
-            id="rate"
-            required
-            value={customersAdress.address2}
-            onChange={handleInputChange}
-            name="address2"
-          />
-        </div>
+                <div className={classes.boxInnerDiv}>
+                  <TextField size="small" type="text" name="phoneNumber" label="phoneNumber" variant="outlined" value={customersAdress.phoneNumber} onChange={handleInputChange} />
+                </div>
 
-        <div className="form-group">
-          <input
-            placeholder="city"
-            type="text"
-            className="form-control"
-            id="rate"
-            required
-            value={customersAdress.city}
-            onChange={handleInputChange}
-            name="city"
-          />
-        </div>
+                <div className={classes.boxInnerDiv}>
+                  <TextField size="small" type="text" name="address1" label="address1" variant="outlined" value={customersAdress.address1} onChange={handleInputChange} />
+                </div>
+                <div className={classes.boxInnerDiv}>
+                  <TextField size="small" type="text" name="address2" label="address2" variant="outlined" value={customersAdress.address2} onChange={handleInputChange} />
+                </div>
 
-        <div className="form-group">
-          <input
-            placeholder="country"
-            type="text"
-            className="form-control"
-            id="rate"
-            required
-            value={customersAdress.country}
-            onChange={handleInputChange}
-            name="country"
-          />
-        </div>
-        <div className="form-group">
-          <input
-            placeholder="countryCode"
-            type="text"
-            className="form-control"
-            id="rate"
-            required
-            value={customersAdress.countryCode}
-            onChange={handleInputChange}
-            name="countryCode"
-          />
-        </div>
-        <div className="form-group">
-          <input
-            placeholder="zip"
-            type="text"
-            className="form-control"
-            id="rate"
-            required
-            value={customersAdress.zip}
-            onChange={handleInputChange}
-            name="zip"
-          />
-        </div>
-        <div className="form-group">
-          <input
-            placeholder="isdCode"
-            type="text"
-            className="form-control"
-            id="rate"
-            required
-            value={customersAdress.isdCode}
-            onChange={handleInputChange}
-            name="isdCode"
-          />
-        </div>
-        <div className="form-group">
-          <input
-            placeholder="phoneNumber"
-            type="text"
-            className="form-control"
-            id="rate"
-            required
-            value={customersAdress.phoneNumber}
-            onChange={handleInputChange}
-            name="phoneNumber"
-          />
-        </div>
+                <div className={classes.boxInnerDiv}>
+                  <TextField size="small" type="text" name="city" label="city" variant="outlined" value={customersAdress.city} onChange={handleInputChange} />
+                </div>
 
-        <button type="button" onClick={saveCustomerAddress} className="btn btn-success">
-          Submit
-        </button>
-      </div>
-    </div>
+                <div className={classes.boxInnerDiv}>
+                  <TextField size="small" type="text" name="country" label="country" variant="outlined" value={customersAdress.country} onChange={handleInputChange} />
+                </div>
+
+                <div className={classes.boxInnerDiv}>
+                  <TextField size="small" type="text" name="zip" label="zip" variant="outlined" value={customersAdress.zip} onChange={handleInputChange} />
+                </div>
+
+                <Box className={classes.buttonmargin}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    type="button"
+                    onClick={saveCustomerAddress}
+                  >
+                    {propertiesfile.button_create}
+                  </Button>
+
+                  <Button
+                    className={classes.cancelmargin}
+                    variant="outlined"
+                    type="button"
+                    onClick={cancelClick}
+                  >
+                    {propertiesfile.button_cancel}
+
+                  </Button>
+                </Box>
+
+              </Paper>
+            </Box>
+          </Grid>
+        </Grid>
+      </Grid>
+
+    </>
+
   );
 };
 

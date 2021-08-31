@@ -40,6 +40,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import AddIcon from '@material-ui/icons/Add';
 import { OptionsType } from 'react-select';
 import { storageRef } from '../../firebaseSetup';
+import propertiesfile from '../../resource.json';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -170,7 +171,7 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: '8px',
   },
   minWidthText: {
-    minWidth: '300px',
+    minWidth: '200px',
   },
   tagWidth: {
     width: '100%',
@@ -305,7 +306,7 @@ const CreateProductComp: React.FC = () => {
   const [inputList, setInputList] = useState([{ optionName: '', optionValue: [] as any }]);
   const [optionList, setoptionList] = useState([]);
   const [optionValue, setOptionValue] = useState([{
-    displayName: '', name: '', price: '', sku: '',
+    displayName: '', name: '', price: '', sku: '', barcode: '',
   }]);
   const [tagValue, setTagValue] = useState([] as any);
   const [productImage, setProductImage] = useState([]);
@@ -417,6 +418,10 @@ const CreateProductComp: React.FC = () => {
     const list = [...inputList];
     list.splice(index, 1);
     setInputList(list);
+    if (list.length == 0) {
+      setVariantChecked(false);
+      setInputList([{ optionName: '', optionValue: [] as any }]);
+    }
   };
 
   // handle click event of the Add button
@@ -475,11 +480,13 @@ const CreateProductComp: React.FC = () => {
                 name: '',
                 price: '',
                 sku: '',
+                barcode: '',
               };
               obj.displayName = `${option1Arry[i]} / ${option2Arry[j]} / ${option3Arry[k]}`;
               obj.name = option1Arry[i] + option2Arry[j] + option3Arry[k];
               obj.price = price;
-              obj.sku = '';
+              obj.sku = productDetail.sku;
+              obj.barcode = productDetail.barcode;
               res.push(obj);
             }
           } else {
@@ -488,11 +495,13 @@ const CreateProductComp: React.FC = () => {
               name: '',
               price: '',
               sku: '',
+              barcode: '',
             };
             obj.displayName = `${option1Arry[i]} / ${option2Arry[j]}`;
             obj.name = option1Arry[i] + option2Arry[j];
             obj.price = price;
-            obj.sku = '';
+            obj.sku = productDetail.sku;
+            obj.barcode = productDetail.barcode;
             res.push(obj);
           }
         }
@@ -502,11 +511,13 @@ const CreateProductComp: React.FC = () => {
           name: '',
           price: '',
           sku: '',
+          barcode: '',
         };
         obj.displayName = option1Arry[i];
         obj.name = option1Arry[i];
         obj.price = price;
-        obj.sku = '';
+        obj.sku = productDetail.sku;
+        obj.barcode = productDetail.barcode;
         res.push(obj);
       }
     }
@@ -536,6 +547,17 @@ const CreateProductComp: React.FC = () => {
     setOptionValue(list);
   };
 
+  const handleBarcodeChange = (event: any, index: number) => {
+    const { name, value } = event.target;
+    console.log(event.target);
+    console.log(name);
+    const list = [...optionValue];
+    const oneList = { ...list[index] };
+    oneList.barcode = value;
+    list[index] = oneList;
+    setOptionValue(list);
+  };
+
   const handleTagChange = (option: any, md: any) => {
     const tagArray: any[] = [];
     console.log(option);
@@ -553,11 +575,12 @@ const CreateProductComp: React.FC = () => {
 
   const saveProduct = async () => {
     const productData = await AddProductData();
-    // const optionsData = await AddOptionsData(productData);
-    // const variantData = await AddVariantData(productData);
+    const optionsData = await AddOptionsData(productData);
+    const variantData = await AddVariantData(productData);
     handleImageUpload(productData);
     console.log('save product');
     console.log(productDetail);
+    history.push('/products');
   };
 
   const AddProductData = async () => {
@@ -673,6 +696,16 @@ const CreateProductComp: React.FC = () => {
     });
   };
 
+  const handleRemoveVariantClick = (index: number) => {
+    console.log(optionValue[index].displayName);
+    const { displayName } = optionValue[index];
+    const filteredArray = optionValue.filter((itm) => displayName.indexOf(itm.displayName) == -1);
+    setOptionValue(filteredArray);
+    // if (filteredArray.length == 0) {
+    //   setVariantChecked(false);
+    // }
+  };
+
   const cancelClick = () => {
     history.push('/products');
   };
@@ -685,9 +718,7 @@ const CreateProductComp: React.FC = () => {
         className={clsx(classes.gridClass, classes.root)}
       >
         <Grid item xs={12} spacing={1}>
-          <Typography component="div" className={classes.pageTitle}>
-            Create Product
-          </Typography>
+          <Typography component="div" className={classes.pageTitle}>{propertiesfile.title_product_create}</Typography>
         </Grid>
 
         <Grid item xs={9}>
@@ -719,7 +750,7 @@ const CreateProductComp: React.FC = () => {
             <Box component="div" className={classes.boxDiv} style={{ width: '100%', display: 'inline-block' }}>
               <Paper elevation={3} className={classes.boxDivPaper} style={{ width: '100%', display: 'inline-block' }}>
                 <div className={classes.boxInnerDiv}>
-                  <TextField size="small" type="text" name="title" label="Name" variant="outlined" value={product.title} onChange={handleInputChange} />
+                  <TextField required size="small" type="text" name="title" label="Name" variant="outlined" value={product.title} onChange={handleInputChange} />
                 </div>
 
                 <div className={classes.boxInnerDiv}>
@@ -838,7 +869,7 @@ const CreateProductComp: React.FC = () => {
                             onChange={(opt, meta) => handleoptionValueChange(opt, meta, i)}
                           />
                           <div className={classes.boxInnerDivToolTip}>
-                            {inputList.length !== 1 && (
+                            {/* {inputList.length !== 1 && ( */}
                             <IconButton
                               className={classes.formdeleteMargin}
                               color="secondary"
@@ -847,7 +878,7 @@ const CreateProductComp: React.FC = () => {
                             >
                               <DeleteIcon />
                             </IconButton>
-                            )}
+                            {/* )} */}
                           </div>
                         </div>
                       </Grid>
@@ -865,7 +896,7 @@ const CreateProductComp: React.FC = () => {
                           onClick={handleAddClick}
                           startIcon={<AddIcon />}
                         >
-                          Add
+                          {propertiesfile.button_add}
                         </Button>
                         )}
                       </div>
@@ -886,12 +917,24 @@ const CreateProductComp: React.FC = () => {
                   <Table className={classes.table}>
                     <TableHead>
                       <TableRow>
-                        <TableCell>Variant</TableCell>
+                        <TableCell>{propertiesfile.variant}</TableCell>
                         <TableCell>
-                          <span className={classes.addMargin}>Price</span>
+                          <span className={classes.addMargin}>{propertiesfile.price}</span>
                           {' '}
                         </TableCell>
-                        <TableCell><span className={classes.addMargin}>SKU </span></TableCell>
+                        <TableCell>
+                          <span className={classes.addMargin}>
+                            {propertiesfile.sku}
+                            {' '}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className={classes.addMargin}>
+                            {propertiesfile.barcode}
+                            {' '}
+                          </span>
+                        </TableCell>
+                        <TableCell />
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -910,6 +953,21 @@ const CreateProductComp: React.FC = () => {
                           <TableCell>
                             {' '}
                             <TextField className={classes.minWidthText} size="small" type="text" name="sku" value={item.sku} onChange={(e) => handleSKUChange(e, index)} variant="outlined" />
+                          </TableCell>
+                          <TableCell>
+                            {' '}
+                            <TextField className={classes.minWidthText} size="small" type="text" name="barcode" value={item.barcode} onChange={(e) => handleBarcodeChange(e, index)} variant="outlined" />
+                          </TableCell>
+                          <TableCell>
+                            <IconButton
+                              className={classes.formdeleteMargin}
+                              color="secondary"
+                              aria-label="delete"
+                              onClick={() => handleRemoveVariantClick(index)}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+
                           </TableCell>
                         </TableRow>
                       ))}
@@ -934,9 +992,9 @@ const CreateProductComp: React.FC = () => {
                     onClick={saveProduct}
                   >
                     {' '}
-                    Create
-                  </Button>
+                    {propertiesfile.button_create}
 
+                  </Button>
                   <Button
                     className={classes.cancelMargin}
                     variant="outlined"
@@ -944,7 +1002,8 @@ const CreateProductComp: React.FC = () => {
                     onClick={cancelClick}
                   >
                     {' '}
-                    Cancel
+                    {propertiesfile.button_cancel}
+
                   </Button>
 
                 </Box>

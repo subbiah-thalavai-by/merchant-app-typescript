@@ -25,6 +25,7 @@ import FirstPageIcon from '@material-ui/icons/FirstPage';
 import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import TableFooter from '@material-ui/core/TableFooter';
+import propertiesfile from '../../resource.json';
 
 const useStyles = makeStyles((theme) => ({
   table: {
@@ -164,12 +165,12 @@ const ProductComp: React.FC = () => {
     setPage(0);
   };
   const redirect = () => {
-    history.push('/products/create');
+    history.push('/product/create');
   };
 
   React.useEffect(() => {
     axios
-      .get<IProduct[]>('https://alm-test.azurewebsites.net/api/2021/v1/products')
+      .get<IProduct[]>(`${process.env.REACT_APP_BASE_URL}products`)
       .then((response) => {
         setProducts(response.data);
         console.log(response.data);
@@ -188,7 +189,7 @@ const ProductComp: React.FC = () => {
     <>
       <Box display="flex" pb={2}>
         <Box flexGrow={1}>
-          <Typography component="div" className={classes.pageTitle}> Product List</Typography>
+          <Typography component="div" className={classes.pageTitle}>{propertiesfile.title_product_list}</Typography>
         </Box>
         <Box>
           <Button
@@ -196,8 +197,7 @@ const ProductComp: React.FC = () => {
             color="primary"
             onClick={redirect}
           >
-            {' '}
-            Add
+            {propertiesfile.button_add}
           </Button>
         </Box>
       </Box>
@@ -206,20 +206,20 @@ const ProductComp: React.FC = () => {
         <Table className={classes.table} aria-label="simple table">
           <TableHead>
             <TableRow>
-              <StyledTableCell>Name</StyledTableCell>
-              <StyledTableCell>Description</StyledTableCell>
+              <StyledTableCell>
+                {propertiesfile.title}
+              </StyledTableCell>
+              <StyledTableCell>
+                {propertiesfile.description}
+              </StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {products.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
               <StyledTableRow key={row.title}>
                 <TableCell>
-                  <a href={`/brands/${row.id}`}>
-                    {' '}
-                    {row.title}
-                    {' '}
-                  </a>
-                  {' '}
+                  <a href={`/#/products/${row.id}`}>{row.title}</a>
+
                 </TableCell>
                 <TableCell>{row.description}</TableCell>
                 {/* <TableCell >{categoryName(row.pid)}</TableCell> */}

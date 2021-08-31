@@ -23,6 +23,7 @@ import {
   Button,
 } from '@material-ui/core';
 import { useHistory } from 'react-router-dom';
+import propertiesfile from '../../resource.json';
 
 interface ITax {
     id: string;
@@ -163,7 +164,7 @@ const TaxComp: React.FC = () => {
   };
 
   const redirect = () => {
-    history.push('/taxes/create');
+    history.push('/taxe/create');
   };
 
   React.useEffect(() => {
@@ -192,7 +193,11 @@ const TaxComp: React.FC = () => {
     <>
       <Box display="flex" pb={2}>
         <Box flexGrow={1}>
-          <Typography component="div" className={classes.pageTitle}> Tax List</Typography>
+          <Typography component="div" className={classes.pageTitle}>
+            {' '}
+            {propertiesfile.title_tax_list}
+            {' '}
+          </Typography>
         </Box>
         <Box>
           <Button
@@ -201,7 +206,7 @@ const TaxComp: React.FC = () => {
             onClick={redirect}
           >
             {' '}
-            Add
+            {propertiesfile.button_add}
           </Button>
         </Box>
       </Box>
@@ -209,8 +214,14 @@ const TaxComp: React.FC = () => {
         <Table aria-label="custom pagination table">
           <TableHead>
             <TableRow>
-              <StyledTableCell>Code</StyledTableCell>
-              <StyledTableCell>Rate</StyledTableCell>
+              <StyledTableCell>
+                {' '}
+                {propertiesfile.code}
+              </StyledTableCell>
+              <StyledTableCell>
+                {' '}
+                {propertiesfile.rate}
+              </StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>

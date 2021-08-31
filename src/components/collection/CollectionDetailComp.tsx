@@ -1,7 +1,10 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
+/* eslint-disable jsx-a11y/alt-text */
+/* eslint-disable import/no-unresolved */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-console */
 import axios from 'axios';
-import { useHistory, Redirect } from 'react-router-dom';
+import { useHistory, Redirect, useParams } from 'react-router-dom';
 import React, { useState, ChangeEvent, useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import TextField from '@material-ui/core/TextField';
@@ -9,16 +12,9 @@ import LinearProgress from '@material-ui/core/LinearProgress';
 import {
   Typography,
   Paper,
-  Link,
   Grid,
   Button,
-  CssBaseline,
-  RadioGroup,
-  FormLabel,
-  MenuItem,
-  FormGroup,
-  FormControl,
-  FormControlLabel,
+  IconButton,
   Box,
 } from '@material-ui/core';
 
@@ -30,9 +26,15 @@ import clsx from 'clsx';
 import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
 import { DropzoneArea, DropzoneAreaProps } from 'material-ui-dropzone';
 
+import { useDebounce } from 'use-debounce';
+import DeleteIcon from '@material-ui/icons/Delete';
+import { firebaseConfig, db, storageRef } from '../../firebaseSetup';
+import propertiesfile from '../../resource.json';
+
 interface ICollectionData {
     title: string,
     description: string,
+    imageURL: string,
 }
 
 const useStyles = makeStyles((theme) => ({
@@ -141,113 +143,253 @@ const useStyles = makeStyles((theme) => ({
     justify: 'center',
     background: 'grey',
   },
+  previewImgDiv: {
+    border: '1px solid',
+    borderColor: '#000',
+    marginRight: '16px',
+    float: 'left',
+    height: '120px',
+    width: '120px',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    background: 'grey',
+  },
+  uploadedImage: {
+    height: 'auto',
+    maxHeight: '120px',
+    maxWidth: '100%',
+    width: 'initial',
+    marginTop: '4px',
+  },
+  deleteImgBtn: {
+    background: '#f2f2f2',
+    position: 'absolute',
+    marginLeft: '87px',
+    marginTop: '-90px',
+    padding: '3px',
+    color: 'red',
+  },
 
   // css for dropzonarea end
 
 }));
 const CollectionDetailComp: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  console.log(id);
   const history = useHistory();
   const classes = useStyles();
+  const [key, setKey] = useState(0);
+  const [debounceKey] = useDebounce(key, 1000);
   const initialCollectionState = {
     title: '',
     description: '',
+    imageURL: '',
   };
   const [collection, setCollection] = useState<ICollectionData>(initialCollectionState);
-  const [collectionImage, setCollectionImage] = useState([]);
+  const [isFormInvalid, setIsFormInvalid] = useState([{ title: '', description: '' }] as any);
+  const [progress, setProgress] = useState(100);
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setCollection({ ...collection, [name]: value });
   };
 
-  const saveCollection = () => {
-    console.log(collection);
-    axios.post(`${process.env.REACT_APP_BASE_URL}collections`, collection)
-      .then((res) => history.push('/collections'));
+  const saveCollection = async () => {
+    const errorObj = {} as any;
+    let error = false;
+    if (collection.title !== '') {
+      errorObj.title = false;
+    } else {
+      errorObj.title = true;
+      error = true;
+    }
+
+    setIsFormInvalid(errorObj);
+
+    if (!error) {
+      setProgress(0);
+      const collectionData = await updateCollectionData();
+      setProgress(100);
+      history.push('/collections');
+    }
+
+    // console.log(collection);
+    // axios.post(`${process.env.REACT_APP_BASE_URL}collections`, collection)
+    //   .then((res) => history.push('/collections'));
   };
 
-  const handlefileupload = (e: any) => {
-    console.log(e);
+  const updateCollectionData = async () => {
+    const response = await axios.post(`${process.env.REACT_APP_BASE_URL}collections`, collection);
   };
+
+  const handlefileupload = async (e: any) => {
+    console.log(e);
+    // eslint-disable-next-line eqeqeq
+    if (e[0].name != '') {
+      const uploadedimage = await AddCollectionImage(e);
+    }
+  };
+
+  const handleDeleteIconClicks = async () => {
+    console.log(id);
+    const categoryObj = {
+      imageURL: '',
+    };
+    const response = await axios.patch(`${process.env.REACT_APP_BASE_URL}collections/${id}`, categoryObj);
+    setCollection({
+      ...collection,
+      imageURL: '',
+    });
+  };
+
+  const AddCollectionImage = async (imageFile: any[]) => new Promise<void>((resolve, reject) => {
+    const fileStoreRef = storageRef.child(`category_images/${id}`).put(imageFile[0]);
+    fileStoreRef.on('state_changed',
+      (snapshot: { bytesTransferred: number; totalBytes: number; }) => {
+        // const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      },
+      (error: any) => {
+        console.log(error);
+        reject(error);
+      },
+      () => {
+        // setProgress(progress);
+        fileStoreRef.snapshot.ref.getDownloadURL().then((downloadURL: any) => {
+          console.log('File available at', downloadURL);
+          const categoryImgObj = {
+            imageURL: downloadURL,
+          };
+          axios.patch(`${process.env.REACT_APP_BASE_URL}collections/${id}`, categoryImgObj);
+          setCollection({
+            ...collection,
+            imageURL: downloadURL,
+          });
+          resolve();
+        });
+      });
+  });
 
   const cancelClick = () => {
-    history.push('/brands');
+    history.push('/collections');
   };
+
+  useEffect(() => {
+    const fetchBrandData = async () => {
+      const response = await axios.get(`${process.env.REACT_APP_BASE_URL}collections/${id}`);
+      console.log(response.data);
+      setCollection(response.data);
+    };
+    fetchBrandData();
+  }, []);
 
   return (
     <>
-      <Grid
-        container
-        spacing={2}
-        className={clsx(classes.gridClass, classes.root)}
-      >
-        <Grid item xs={12} spacing={1}>
-          <Typography component="div" className={classes.pageTitle}>
-            Create Collection
-          </Typography>
-        </Grid>
+      { progress < 100
+        ? (
+          <div>
+            <LinearProgress />
+          </div>
+        )
+        : (
+          <Grid
+            container
+            spacing={2}
+            className={clsx(classes.gridClass, classes.root)}
+          >
+            <Grid item xs={12} spacing={1}>
+              <Typography component="div" className={classes.pageTitle}>
+                {propertiesfile.title_collection_detail}
+              </Typography>
+            </Grid>
 
-        <Grid item xs={9}>
-          <Grid item xs={12} justify="flex-start">
-            <Box component="div" className={classes.boxDiv} style={{ width: '100%', display: 'inline-block' }}>
-              <Paper elevation={3} className={classes.boxDivPaper} style={{ width: '100%', display: 'inline-block' }}>
-                <div className={classes.boxDropZoneDiv}>
-                  <DropzoneArea
-                    acceptedFiles={['image/*']}
-                    onChange={(e) => handlefileupload(e)}
-                    showPreviewsInDropzone={false}
-                    dropzoneClass={`${classes.dropzonediv}`}
-                    previewGridClasses={{
-                      container: classes.previewContainer,
-                      item: classes.previewItem,
-                    }}
-                    previewText=""
-                    showPreviews
-                    filesLimit={1}
-                  />
-                </div>
-              </Paper>
-            </Box>
-          </Grid>
-
-          <Grid item xs={12} justify="flex-start">
-            <Box component="div" className={classes.boxDiv} style={{ width: '100%', display: 'inline-block' }}>
-              <Paper elevation={3} className={classes.boxDivPaper} style={{ width: '100%', display: 'inline-block' }}>
-                <div className={classes.boxInnerDiv}>
-                  <TextField size="small" type="text" name="title" label="Collection Name" variant="outlined" value={collection.title} onChange={handleInputChange} />
-                </div>
-                <div className={classes.boxInnerDiv}>
-                  <TextField size="small" type="text" name="description" label="description" variant="outlined" value={collection.description} onChange={handleInputChange} />
-                </div>
-
-                <Box className={classes.buttonmargin}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    type="button"
-                    onClick={saveCollection}
-                  >
-                    {' '}
-                    Create
-                  </Button>
-
-                  <Button
-                    className={classes.cancelmargin}
-                    variant="outlined"
-                    type="button"
-                    onClick={cancelClick}
-                  >
-                    {' '}
-                    Cancel
-                  </Button>
+            <Grid item xs={9}>
+              <Grid item xs={12} justify="flex-start">
+                <Box component="div" className={classes.boxDiv} style={{ width: '100%', display: 'inline-block' }}>
+                  <Paper elevation={3} className={classes.boxDivPaper} style={{ width: '100%', display: 'inline-block' }}>
+                    {collection.imageURL
+                      ? (
+                        <div className={classes.previewImgDiv} style={{ margin: '8px' }}>
+                          <div>
+                            <img className={classes.uploadedImage} src={collection.imageURL} />
+                          </div>
+                          <IconButton className={classes.deleteImgBtn} name="details" onClick={() => handleDeleteIconClicks()}>
+                            <DeleteIcon />
+                          </IconButton>
+                        </div>
+                      )
+                      : (
+                        <div className={classes.boxDropZoneDiv}>
+                          <DropzoneArea
+                            key={debounceKey}
+                            acceptedFiles={['image/*']}
+                            onChange={(e) => handlefileupload(e)}
+                            showPreviewsInDropzone={false}
+                            dropzoneClass={`${classes.dropzonediv} ${collection.imageURL && classes.dropZoneNoneClass}`}
+                            previewGridClasses={{
+                              container: classes.previewContainer,
+                              item: classes.previewItem,
+                            }}
+                            previewText=""
+                            showPreviews={false}
+                            filesLimit={1}
+                            initialFiles={[collection.imageURL]}
+                          />
+                        </div>
+                      )}
+                  </Paper>
                 </Box>
+              </Grid>
 
-              </Paper>
-            </Box>
+              <Grid item xs={12} justify="flex-start">
+                <Box component="div" className={classes.boxDiv} style={{ width: '100%', display: 'inline-block' }}>
+                  <Paper elevation={3} className={classes.boxDivPaper} style={{ width: '100%', display: 'inline-block' }}>
+                    <div className={classes.boxInnerDiv}>
+                      <TextField
+                        error={isFormInvalid.title}
+                        helperText={isFormInvalid.title && propertiesfile.RequiredErrorMessage}
+                        size="small"
+                        type="text"
+                        name="title"
+                        label="Collection Title"
+                        variant="outlined"
+                        value={collection.title}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div className={classes.boxInnerDiv}>
+                      <TextField size="small" type="text" name="description" label="description" variant="outlined" value={collection.description} onChange={handleInputChange} />
+                    </div>
+
+                    <Box className={classes.buttonmargin}>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        type="button"
+                        onClick={saveCollection}
+                      >
+                        {propertiesfile.button_update}
+
+                      </Button>
+
+                      <Button
+                        className={classes.cancelmargin}
+                        variant="outlined"
+                        type="button"
+                        onClick={cancelClick}
+                      >
+                        {' '}
+                        {propertiesfile.button_cancel}
+
+                      </Button>
+                    </Box>
+
+                  </Paper>
+                </Box>
+              </Grid>
+            </Grid>
           </Grid>
-        </Grid>
-      </Grid>
-
+        )}
     </>
   );
 };

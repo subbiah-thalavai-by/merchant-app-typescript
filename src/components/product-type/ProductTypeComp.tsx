@@ -23,6 +23,7 @@ import {
   Button,
 } from '@material-ui/core';
 import { useHistory } from 'react-router-dom';
+import propertiesfile from '../../resource.json';
 
 interface IProductType {
     id: string;
@@ -161,12 +162,12 @@ const ProductTypeComp: React.FC = () => {
   };
 
   const redirect = () => {
-    history.push('/product-types/create');
+    history.push('/product-type/create');
   };
 
   React.useEffect(() => {
     axios
-      .get<IProductType[]>('https://alm-test.azurewebsites.net/api/2021/v1/product-types')
+      .get<IProductType[]>(`${process.env.REACT_APP_BASE_URL}product-types`)
       .then((response) => {
         setProductTypes(response.data);
         console.log(response.data);
@@ -185,7 +186,7 @@ const ProductTypeComp: React.FC = () => {
     <>
       <Box display="flex" pb={2}>
         <Box flexGrow={1}>
-          <Typography component="div" className={classes.pageTitle}> Product Type List</Typography>
+          <Typography component="div" className={classes.pageTitle}>{propertiesfile.title_product_type_list}</Typography>
         </Box>
         <Box>
           <Button
@@ -193,8 +194,8 @@ const ProductTypeComp: React.FC = () => {
             color="primary"
             onClick={redirect}
           >
-            {' '}
-            Add
+            {propertiesfile.button_add}
+
           </Button>
         </Box>
       </Box>
@@ -202,7 +203,7 @@ const ProductTypeComp: React.FC = () => {
         <Table aria-label="custom pagination table">
           <TableHead>
             <TableRow>
-              <StyledTableCell>Name</StyledTableCell>
+              <StyledTableCell>{propertiesfile.name}</StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -212,7 +213,11 @@ const ProductTypeComp: React.FC = () => {
             ).map((row) => (
               <StyledTableRow key={row.id}>
                 <TableCell>
-                  {row.title}
+                  <a href={`/#/product-types/${row.id}`}>
+                    {' '}
+                    {row.title}
+                    {' '}
+                  </a>
                 </TableCell>
               </StyledTableRow>
             ))}

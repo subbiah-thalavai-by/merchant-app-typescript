@@ -25,7 +25,8 @@ import FirstPageIcon from '@material-ui/icons/FirstPage';
 import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import TableFooter from '@material-ui/core/TableFooter';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../../context/AuthContext';
+import propertiesfile from '../../resource.json';
 
 const useStyles = makeStyles((theme) => ({
   table: {
@@ -168,12 +169,12 @@ const BrandComp: React.FC = () => {
     setPage(0);
   };
   const redirect = () => {
-    history.push('/brands/create');
+    history.push('/brand/create');
   };
 
   useEffect(() => {
     axios
-      .get<IBrand[]>('https://alm-test.azurewebsites.net/api/2021/v1/brands')
+      .get<IBrand[]>(`${process.env.REACT_APP_BASE_URL}brands`)
       .then((response) => {
         setBrands(response.data);
         console.log(response.data);
@@ -192,7 +193,9 @@ const BrandComp: React.FC = () => {
     <>
       <Box display="flex" pb={2}>
         <Box flexGrow={1}>
-          <Typography component="div" className={classes.pageTitle}> Brand List</Typography>
+          <Typography component="div" className={classes.pageTitle}>
+            {propertiesfile.title_brand_list}
+          </Typography>
         </Box>
         <Box>
           <Button
@@ -200,8 +203,7 @@ const BrandComp: React.FC = () => {
             color="primary"
             onClick={redirect}
           >
-            {' '}
-            Add
+            {propertiesfile.button_add}
           </Button>
         </Box>
       </Box>
@@ -210,8 +212,8 @@ const BrandComp: React.FC = () => {
         <Table className={classes.table} aria-label="simple table">
           <TableHead>
             <TableRow>
-              <StyledTableCell>Name</StyledTableCell>
-              <StyledTableCell>Description</StyledTableCell>
+              <StyledTableCell>{propertiesfile.title}</StyledTableCell>
+              <StyledTableCell>{propertiesfile.description}</StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>

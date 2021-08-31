@@ -7,7 +7,7 @@ import 'firebase/storage';
 const firebaseConfig = firebase.initializeApp({
   apiKey: 'AIzaSyBzc-Pk4vZN38Hs4SAh6X1QGBXskZDOzAg',
   authDomain: 'merchant-app-20e14.firebaseapp.com',
-  projectId: 'merchant-app-20e14',
+  projectId: 'merchant-app-20e14121',
   storageBucket: 'merchant-app-20e14.appspot.com',
   messagingSenderId: '894343932500',
   appId: '1:894343932500:web:994caab5e4876b589a5bc1',

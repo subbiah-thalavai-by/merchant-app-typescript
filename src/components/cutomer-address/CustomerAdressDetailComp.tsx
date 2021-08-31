@@ -1,13 +1,12 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, ChangeEvent } from 'react';
 import axios from 'axios';
 import {
-  useHistory, Redirect, useParams, Link,
+  useHistory, Redirect, useParams,
 } from 'react-router-dom';
 import { makeStyles } from '@material-ui/core/styles';
 import TextField from '@material-ui/core/TextField';
 import LinearProgress from '@material-ui/core/LinearProgress';
-
 import {
   Typography,
   Paper,
@@ -17,32 +16,6 @@ import {
 } from '@material-ui/core';
 import clsx from 'clsx';
 import propertiesfile from '../../resource.json';
-
-interface ICustomer {
-    id: string;
-    firstName: string;
-    lastName: string;
-    isdCode: string;
-    phoneNumber: string;
-    email: string;
-    emailVerified: boolean;
-    marketing: string;
-}
-
-interface ICustomerAddress {
-    firstName: string;
-    lastName: string;
-    address1: string;
-    address2: string;
-    city: string;
-    country: string;
-    countryCode: string;
-    zip: string;
-    isdCode: string;
-    phoneNumber: string;
-}
-
-const defaultCiustomerAdresses: ICustomerAddress[] = [];
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -119,19 +92,22 @@ const useStyles = makeStyles((theme) => ({
 
 }));
 
-const CustomerDetailComp: React.FC = () => {
+interface ICustomerAddress {
+    firstName: string;
+    lastName: string;
+    address1: string;
+    address2: string;
+    city: string;
+    country: string;
+    countryCode: string;
+    zip: string;
+    isdCode: string;
+    phoneNumber: string;
+}
+
+const CustomerAddressDetailcomp: React.FC = () => {
   const history = useHistory();
   const classes = useStyles();
-  const intialCustomerState = {
-    id: '',
-    firstName: '',
-    lastName: '',
-    isdCode: '',
-    phoneNumber: '',
-    email: '',
-    emailVerified: false,
-    marketing: '',
-  };
   const intialCustomerAddressState = {
     firstName: '',
     lastName: '',
@@ -144,100 +120,100 @@ const CustomerDetailComp: React.FC = () => {
     isdCode: '',
     phoneNumber: '',
   };
-  const [customer, setCustomer] = React.useState<ICustomer>(intialCustomerState);
+
   const [customersAdress, setCustomersAdress] = React.useState<ICustomerAddress>(intialCustomerAddressState);
   const [isFormInvalid, setIsFormInvalid] = useState([{ }] as any);
   const [progress, setProgress] = useState(100);
-  const [errorOpen, setErrorOpen] = React.useState(false);
-  const [apiError, setApiError] = React.useState('');
 
-  const { id } = useParams<{ id: string }>();
+  const { id, aid } = useParams<{ id: string, aid:string }>();
   console.log(id);
-
-  React.useEffect(() => {
-    const fetCustomerList = async () => {
-      const response = await axios
-        .get<ICustomer>(`${process.env.REACT_APP_BASE_URL}customers/${id}`);
-      setCustomer(response.data);
-      console.log(response.data);
-    };
-
-    fetCustomerList();
-  }, []);
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
-    setCustomer({ ...customer, [name]: value });
+    // console.log(name);
+    // console.log(value);
+    setCustomersAdress({ ...customersAdress, [name]: value });
   };
 
-  const saveCustomer = async () => {
+  React.useEffect(() => {
+    const fetCustomerAddressList = async () => {
+      const response = await axios
+        .get<ICustomerAddress>(`${process.env.REACT_APP_BASE_URL}customers/${id}/addresses/${aid}`);
+      setCustomersAdress(response.data);
+      console.log(response.data);
+    };
+
+    fetCustomerAddressList();
+  }, []);
+
+  const saveCustomerAddress = () => {
     const errorObj = {} as any;
     let error = false;
-    if (customer.firstName !== '') {
+    if (customersAdress.firstName !== '') {
       errorObj.firstName = false;
     } else {
       errorObj.firstName = true;
       error = true;
     }
-    if (customer.lastName !== '') {
+    if (customersAdress.lastName !== '') {
       errorObj.lastName = false;
     } else {
       errorObj.lastName = true;
       error = true;
     }
-    if (customer.isdCode !== '') {
+    if (customersAdress.isdCode !== '') {
       errorObj.isdCode = false;
     } else {
       errorObj.isdCode = true;
       error = true;
     }
-    if (customer.phoneNumber !== '') {
+    if (customersAdress.phoneNumber !== '') {
       errorObj.phoneNumber = false;
     } else {
       errorObj.phoneNumber = true;
       error = true;
     }
-    if (customer.email !== '') {
-      errorObj.email = false;
+    if (customersAdress.address1 !== '') {
+      errorObj.address1 = false;
     } else {
-      errorObj.email = true;
+      errorObj.address1 = true;
+      error = true;
+    }
+    if (customersAdress.address2 !== '') {
+      errorObj.address2 = false;
+    } else {
+      errorObj.address2 = true;
+      error = true;
+    }
+    if (customersAdress.city !== '') {
+      errorObj.city = false;
+    } else {
+      errorObj.city = true;
+      error = true;
+    }
+    if (customersAdress.country !== '') {
+      errorObj.country = false;
+    } else {
+      errorObj.country = true;
+      error = true;
+    }
+    if (customersAdress.zip !== '') {
+      errorObj.zip = false;
+    } else {
+      errorObj.zip = true;
       error = true;
     }
     setIsFormInvalid(errorObj);
-
-    console.log(customer);
     if (!error) {
-      setProgress(0);
-      const customerData = await updateCustomerData();
-      setProgress(100);
-      history.push('/customers');
-      // axios.post(`${process.env.REACT_APP_BASE_URL}customers`, customer)
-      //   .then((res) => history.push('/customers'));
+      axios.post(`${process.env.REACT_APP_BASE_URL}/customers/${id}/addresses`, customersAdress)
+        .then((res) => history.push('/customers'));
+      console.log(customersAdress);
     }
-  };
-
-  const updateCustomerData = async () => {
-    let returnValue;
-    try {
-      const response = await axios.post(`${process.env.REACT_APP_BASE_URL}customers`, customer);
-      returnValue = 'success';
-    } catch (e: any) {
-      setErrorOpen(true);
-      setApiError(e.response.data.message);
-      returnValue = 'error';
-    }
-    return returnValue;
   };
 
   const cancelClick = () => {
     history.push('/customers');
   };
-
-  // const redirect = () => {
-  //   alert('vaada');
-  //   // history.push(`/#/customers/${id}/addresses`);
-  //     <Redirect to={`/#/customers/${id}/addresses`} />;
-  // };
 
   return (
     <>
@@ -247,26 +223,9 @@ const CustomerDetailComp: React.FC = () => {
         className={clsx(classes.gridClass, classes.root)}
       >
         <Grid item xs={12} spacing={1}>
-          <Box display="flex" pb={2}>
-            <Box flexGrow={1}>
-              <Typography component="div" className={classes.pageTitle}>
-                {' '}
-                {propertiesfile.title_customer_detail}
-                {' '}
-              </Typography>
-            </Box>
-            <Box>
-              <Button
-                variant="contained"
-                color="primary"
-                component={Link}
-                to={`/customers/${id}/addresses`}
-              >
-                {propertiesfile.button_customer_address}
-              </Button>
-              {/* <a href={`/#/customers/${id}/addresses`}>Customer Address</a> */}
-            </Box>
-          </Box>
+          <Typography component="div" className={classes.pageTitle}>
+            {propertiesfile.title_customer_address_detail}
+          </Typography>
         </Grid>
 
         <Grid item xs={9}>
@@ -281,22 +240,22 @@ const CustomerDetailComp: React.FC = () => {
                     size="small"
                     type="text"
                     name="firstName"
-                    label="firstName"
+                    label="First Name"
                     variant="outlined"
-                    value={customer.firstName}
+                    value={customersAdress.firstName}
                     onChange={handleInputChange}
                   />
                 </div>
                 <div className={classes.boxInnerDiv}>
                   <TextField
-                    error={isFormInvalid.firstName}
-                    helperText={isFormInvalid.firstName && propertiesfile.RequiredErrorMessage}
+                    error={isFormInvalid.lastName}
+                    helperText={isFormInvalid.lastName && propertiesfile.RequiredErrorMessage}
                     size="small"
                     type="text"
                     name="lastName"
-                    label="firstName"
+                    label="Last Name"
                     variant="outlined"
-                    value={customer.lastName}
+                    value={customersAdress.lastName}
                     onChange={handleInputChange}
                   />
                 </div>
@@ -308,9 +267,9 @@ const CustomerDetailComp: React.FC = () => {
                     size="small"
                     type="text"
                     name="isdCode"
-                    label="isdCode"
+                    label="ISD Code"
                     variant="outlined"
-                    value={customer.isdCode}
+                    value={customersAdress.isdCode}
                     onChange={handleInputChange}
                   />
                 </div>
@@ -322,23 +281,78 @@ const CustomerDetailComp: React.FC = () => {
                     size="small"
                     type="text"
                     name="phoneNumber"
-                    label="phoneNumber"
+                    label="Phone Number"
                     variant="outlined"
-                    value={customer.phoneNumber}
+                    value={customersAdress.phoneNumber}
                     onChange={handleInputChange}
                   />
                 </div>
 
                 <div className={classes.boxInnerDiv}>
                   <TextField
-                    error={isFormInvalid.email}
-                    helperText={isFormInvalid.email && propertiesfile.RequiredErrorMessage}
+                    error={isFormInvalid.address1}
+                    helperText={isFormInvalid.address1 && propertiesfile.RequiredErrorMessage}
                     size="small"
                     type="text"
-                    name="email"
-                    label="email"
+                    name="address1"
+                    label="Address1"
                     variant="outlined"
-                    value={customer.email}
+                    value={customersAdress.address1}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className={classes.boxInnerDiv}>
+                  <TextField
+                    error={isFormInvalid.address2}
+                    helperText={isFormInvalid.address2 && propertiesfile.RequiredErrorMessage}
+                    size="small"
+                    type="text"
+                    name="address2"
+                    label="Address2"
+                    variant="outlined"
+                    value={customersAdress.address2}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className={classes.boxInnerDiv}>
+                  <TextField
+                    error={isFormInvalid.city}
+                    helperText={isFormInvalid.city && propertiesfile.RequiredErrorMessage}
+                    size="small"
+                    type="text"
+                    name="city"
+                    label="City"
+                    variant="outlined"
+                    value={customersAdress.city}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className={classes.boxInnerDiv}>
+                  <TextField
+                    error={isFormInvalid.country}
+                    helperText={isFormInvalid.country && propertiesfile.RequiredErrorMessage}
+                    size="small"
+                    type="text"
+                    name="country"
+                    label="Country"
+                    variant="outlined"
+                    value={customersAdress.country}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className={classes.boxInnerDiv}>
+                  <TextField
+                    error={isFormInvalid.zip}
+                    helperText={isFormInvalid.zip && propertiesfile.RequiredErrorMessage}
+                    size="small"
+                    type="text"
+                    name="zip"
+                    label="Zip"
+                    variant="outlined"
+                    value={customersAdress.zip}
                     onChange={handleInputChange}
                   />
                 </div>
@@ -348,9 +362,9 @@ const CustomerDetailComp: React.FC = () => {
                     variant="contained"
                     color="primary"
                     type="button"
-                    onClick={saveCustomer}
+                    onClick={saveCustomerAddress}
                   >
-                    {propertiesfile.button_update}
+                    {propertiesfile.button_create}
                   </Button>
 
                   <Button
@@ -360,6 +374,7 @@ const CustomerDetailComp: React.FC = () => {
                     onClick={cancelClick}
                   >
                     {propertiesfile.button_cancel}
+
                   </Button>
                 </Box>
 
@@ -374,4 +389,4 @@ const CustomerDetailComp: React.FC = () => {
   );
 };
 
-export default CustomerDetailComp;
+export default CustomerAddressDetailcomp;
